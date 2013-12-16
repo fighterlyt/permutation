@@ -4,23 +4,19 @@ permutation
 A permutation library for Golang.
 
   Use NewPerm to generate a Pemutator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type. If k's element is ordered,less argument can be nil.For ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
-  
-  func NewPerm(k interface{}, less Less) (*Permutator, error) 
+	func NewPerm(k interface{}, less Less) (*Permutator, error) 
 
   After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can not be used concurrently, i will add this funcationality later.
   
-Invoke Permutator.Next() to return the next permutation in lexcial order.If all permutations generated,return an error
-
-  func (p *Permutator) Next()(interface{}, error)
+  Invoke Permutator.Next() to return the next permutation in lexcial order.If all permutations generated,return an error
+	func (p *Permutator) Next()(interface{}, error)
   The returned interface{} can be modified,it does nothing to do with the Permutator
 
 Invoke Permutator.Left() to return the number of ungenerated permutation
-
-  func (p Permutator) Left() int
+	func (p Permutator) Left() int
 
 Invoke Permutator.Index() to return the index of next permutation, which start from 1 to factorial(length of slice)
-
-  func (p Permutator) Index() int
+	func (p Permutator) Index() int
 
 An example:
 
