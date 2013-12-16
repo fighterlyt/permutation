@@ -19,19 +19,17 @@ Invoke Permutator.Index() to return the index of next permutation, which start f
   func (p Permutator) Index() int
 
 An example:
-func main() {
-	i := []int{4,3,2,1}
-
-	
-	p,err:=NewPerm(i,nil) //generate a Permutator
-	if err != nil {
-		fmt.Println(err)
-		return
+	func main() {
+		i := []int{4,3,2,1}
+		p,err:=NewPerm(i,nil) //generate a Permutator
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		for i,err:=p.Next();err==nil;i,err=p.Next(){
+			fmt.Printf("%3d permutation: %v left %d\n",p.Index()-1,i.([]int),p.Left())
+		}
 	}
-	for i,err:=p.Next();err==nil;i,err=p.Next(){
-		fmt.Printf("%3d permutation: %v left %d\n",p.Index()-1,i.([]int),p.Left())
-	}
-}
 --------------------------------------
 outputs:
   1 permutation: [1 2 3] left 5
