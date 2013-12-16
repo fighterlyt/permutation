@@ -7,7 +7,7 @@ A permutation library for Golang.
 	
 	func NewPerm(k interface{}, less Less) (*Permutator, error) 
 
-  After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can not be used concurrently, i will add this funcationality later.
+  After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.A Permutator can  be used concurrently
   
   Invoke Permutator.Next() to return the next permutation in lexcial order.If all permutations generated,return an error
 	
