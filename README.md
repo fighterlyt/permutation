@@ -23,7 +23,7 @@ Invoke Permutator.Index() to return the index of next permutation, which start f
 	func (p Permutator) Index() int
 
 An example:
-
+```Go
 	func main() {
 		i := []int{4,3,2,1}
 		p,err:=NewPerm(i,nil) //generate a Permutator
@@ -35,6 +35,7 @@ An example:
 			fmt.Printf("%3d permutation: %v left %d\n",p.Index()-1,i.([]int),p.Left())
 		}
 	}
+```
 --------------------------------------
 outputs:
 
