@@ -44,3 +44,6 @@ outputs:
 	  4 permutation: [2 3 1] left 2
 	  5 permutation: [3 1 2] left 1
 	  6 permutation: [3 2 1] left 0
+
+For people who speak chinese, can also visit my article  
+	http://blog.csdn.net/fighterlyt/article/details/17357509
