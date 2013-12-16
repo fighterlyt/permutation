@@ -33,7 +33,7 @@ type Permutator struct {
 	index  int
 	amount int
 }
-//Invoke Permutator.Index() to return the index of next permutation, which start from 1 to factorial(length of slice)
+//Invoke Permutator.Index() to return the index of next permutation, which start from 1 to n! (n is the length of slice)
 func (p Permutator) Index() int {
 	<-p.idle
 	j:=p.index
@@ -43,7 +43,7 @@ func (p Permutator) Index() int {
 //Generate a New Permuatator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type
 //if k's element is ordered,less argument can be nil
 //for ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
-//After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can not be used concurrently, i will add this funcationality later.
+//After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can  be used concurrently
 
 func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	v := reflect.ValueOf(k)
@@ -77,7 +77,7 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 			return nil, errors.New("the element type of slice is not ordered,you must provide a function\n")
 		}
 	}
-	//check tot see if v is in increasing order,if not sort it 
+	//check to see if v is in increasing order,if not sort it 
 	i:=0
 	for i = 0; i < length-1; i++ {
 		if !less(v.Index(i).Interface(), v.Index(i+1).Interface()) {

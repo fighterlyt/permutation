@@ -3,7 +3,7 @@ permutation
 
 A permutation library for Golang.
 
-  Use NewPerm to generate a Pemutator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type. If k's element is ordered,less argument can be nil.For ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
+  Use NewPerm() to generate a Pemutator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type. If k's element is ordered,less argument can be nil.For ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
 	
 	func NewPerm(k interface{}, less Less) (*Permutator, error) 
 
@@ -19,8 +19,7 @@ Invoke Permutator.Left() to return the number of ungenerated permutation
 
 	func (p Permutator) Left() int
 
-Invoke Permutator.Index() to return the index of next permutation, which start from 1 to factorial(length of slice)
-
+Invoke Permutator.Index() to return the index of next permutation, which start from 1 to n! (n is the length of slice)
 	func (p Permutator) Index() int
 
 An example:
