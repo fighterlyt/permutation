@@ -38,6 +38,7 @@ An example:
 	}
 --------------------------------------
 outputs:
+
 	  1 permutation: [1 2 3] left 5
 	  2 permutation: [1 3 2] left 4
 	  3 permutation: [2 1 3] left 3
