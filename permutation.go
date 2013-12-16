@@ -26,6 +26,7 @@ func (s sortable) Swap(i, j int) {
 }
 
 type Permutator struct {
+	idle   chan bool
 	value  reflect.Value
 	less   Less
 	length int
@@ -34,7 +35,10 @@ type Permutator struct {
 }
 //Invoke Permutator.Index() to return the index of next permutation, which start from 1 to factorial(length of slice)
 func (p Permutator) Index() int {
-	return p.index
+	<-p.idle
+	j:=p.index
+	p.idle<-true
+	return j
 }
 //Generate a New Permuatator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type
 //if k's element is ordered,less argument can be nil
@@ -83,16 +87,22 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	if i != length-1 {
 		sort.Sort(sortable{v, less})
 	}
-
-	return &Permutator{value: v, less: less, length: length, index: 1,amount:factorial(length)}, nil
+	s:=&Permutator{value: v, less: less, length: length, index: 1,amount:factorial(length)}
+	s.idle=make(chan bool,1)
+	s.idle<-true
+	return s, nil
 }
 //generate the next permuation in lexcial order,if all permutations generated,return an error
 func (p *Permutator) Next()(interface{}, error) {
+	<-p.idle
 	if p.length == 1 {
 		if p.index == 1 {
 			p.index++
-			return p.value.Interface(), nil
+			result:=p.value.Interface()
+			p.idle<-true
+			return result, nil
 		} else {
+			p.idle<-true
 			return nil, errors.New("all Permutations generated")
 		}
 	}
@@ -104,6 +114,7 @@ func (p *Permutator) Next()(interface{}, error) {
 		p.index++
 		l:= reflect.MakeSlice(p.value.Type(),p.length,p.length)
 		reflect.Copy(l,p.value)
+		p.idle<-true
 		return l.Interface(), nil
 	}
 
@@ -115,6 +126,7 @@ func (p *Permutator) Next()(interface{}, error) {
 		}
 	}
 	if i < 0 {
+		p.idle<-true
 		return nil, errors.New("all Permutations generated")
 	}
 	for j = p.length - 1; j >= 0; j-- {
@@ -133,12 +145,15 @@ func (p *Permutator) Next()(interface{}, error) {
 	p.index++
 	l:= reflect.MakeSlice(p.value.Type(),p.length,p.length)
 	reflect.Copy(l,p.value)
+	p.idle<-true
 	return l.Interface(), nil
 }
 func (p Permutator) Left() int {
-	return p.amount-p.index+1
+	<-p.idle
+	j:=p.amount-p.index+1
+	p.idle<-true
+	return j
 }
-
 //reverse the slice v[i:j]
 func reverse(v reflect.Value, i, j int) {
 	length := j - i + 1
