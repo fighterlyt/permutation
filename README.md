@@ -13,9 +13,11 @@ A permutation library for Golang.
   The returned interface{} can be modified,it does nothing to do with the Permutator
 
 Invoke Permutator.Left() to return the number of ungenerated permutation
+
 	func (p Permutator) Left() int
 
 Invoke Permutator.Index() to return the index of next permutation, which start from 1 to factorial(length of slice)
+
 	func (p Permutator) Index() int
 
 An example:
