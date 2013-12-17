@@ -33,13 +33,85 @@ type Permutator struct {
 	index  int
 	amount int
 }
+//Reset the Permutator, next time invoke p.Next() will return the first permutation in lexicalorder
+func (p *Permutator) Reset() {
+	<-p.idle
+	sort.Sort(sortable{p.value, p.less})
+	p.index = 1
+	p.idle <- true
+}
+//return the next n permuations, if n>p.Left(),return all the left permuations
+//if all permutaions generated or n is illegal(n<=0),return a empty slice
+func (p *Permutator) NextN(n int) interface{} {
+	<-p.idle
+	//if n<=0 or we generate all pemutations,just return a empty slice
+	if n <= 0 || p.left() == 0 {
+		p.idle <- true
+		return make([]reflect.Value, 0, 0)
+	}
+
+	if p.length == 1 {
+		p.index++
+		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+		reflect.Copy(l, p.value)
+		p.idle <- true
+		result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 1, 1)
+		result.Index(0).Set(l)
+		return result.Interface()
+	}
+
+	i := 0
+	j := 0
+	cap := p.left()
+	if cap > n {
+		cap = n
+	}
+	result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), cap, cap)
+	if p.index == 1 {
+		p.index++
+		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+		reflect.Copy(l, p.value)
+		result.Index(0).Set(l)
+	}
+
+	for k := 1; k < cap; k++ {
+		for i = p.length - 2; i >= 0; i-- {
+			current := p.value.Index(i).Interface()
+			next := p.value.Index(i + 1).Interface()
+			if p.less(current, next) {
+				break
+			}
+		}
+		for j = p.length - 1; j >= 0; j-- {
+			if p.less(p.value.Index(i).Interface(), p.value.Index(j).Interface()) {
+				break
+			}
+		}
+		//swap
+		temp := reflect.ValueOf(p.value.Index(i).Interface())
+		p.value.Index(i).Set(p.value.Index(j))
+		p.value.Index(j).Set(temp)
+		//reverse
+		reverse(p.value, i+1, p.length-1)
+
+		//increase the counter
+		p.index++
+		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+		reflect.Copy(l, p.value)
+		result.Index(k).Set(l)
+	}
+	p.idle<-true
+	return result.Interface()
+}
+
 //Invoke Permutator.Index() to return the index of next permutation, which start from 1 to n! (n is the length of slice)
 func (p Permutator) Index() int {
 	<-p.idle
-	j:=p.index
-	p.idle<-true
+	j := p.index
+	p.idle <- true
 	return j
 }
+
 //Generate a New Permuatator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type
 //if k's element is ordered,less argument can be nil
 //for ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
@@ -58,9 +130,9 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 		return nil, errors.New("argument must not be empty")
 	}
 
-	l:= reflect.MakeSlice(v.Type(),v.Len(),v.Len())
-	reflect.Copy(l,v)
-	v=l
+	l := reflect.MakeSlice(v.Type(), v.Len(), v.Len())
+	reflect.Copy(l, v)
+	v = l
 
 	length := v.Len()
 	if less == nil {
@@ -77,8 +149,8 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 			return nil, errors.New("the element type of slice is not ordered,you must provide a function\n")
 		}
 	}
-	//check to see if v is in increasing order,if not sort it 
-	i:=0
+	//check to see if v is in increasing order,if not sort it
+	i := 0
 	for i = 0; i < length-1; i++ {
 		if !less(v.Index(i).Interface(), v.Index(i+1).Interface()) {
 			break
@@ -87,24 +159,18 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	if i != length-1 {
 		sort.Sort(sortable{v, less})
 	}
-	s:=&Permutator{value: v, less: less, length: length, index: 1,amount:factorial(length)}
-	s.idle=make(chan bool,1)
-	s.idle<-true
+	s := &Permutator{value: v, less: less, length: length, index: 1, amount: factorial(length)}
+	s.idle = make(chan bool, 1)
+	s.idle <- true
 	return s, nil
 }
+
 //generate the next permuation in lexcial order,if all permutations generated,return an error
-func (p *Permutator) Next()(interface{}, error) {
+func (p *Permutator) Next() (interface{}, error) {
 	<-p.idle
-	if p.length == 1 {
-		if p.index == 1 {
-			p.index++
-			result:=p.value.Interface()
-			p.idle<-true
-			return result, nil
-		} else {
-			p.idle<-true
-			return nil, errors.New("all Permutations generated")
-		}
+	if p.left() <= 0 {
+		p.idle <- true
+		return nil, errors.New("all Permutations generated")
 	}
 
 	i := 0
@@ -112,9 +178,9 @@ func (p *Permutator) Next()(interface{}, error) {
 
 	if p.index == 1 {
 		p.index++
-		l:= reflect.MakeSlice(p.value.Type(),p.length,p.length)
-		reflect.Copy(l,p.value)
-		p.idle<-true
+		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+		reflect.Copy(l, p.value)
+		p.idle <- true
 		return l.Interface(), nil
 	}
 
@@ -124,10 +190,6 @@ func (p *Permutator) Next()(interface{}, error) {
 		if p.less(current, next) {
 			break
 		}
-	}
-	if i < 0 {
-		p.idle<-true
-		return nil, errors.New("all Permutations generated")
 	}
 	for j = p.length - 1; j >= 0; j-- {
 		if p.less(p.value.Index(i).Interface(), p.value.Index(j).Interface()) {
@@ -143,17 +205,22 @@ func (p *Permutator) Next()(interface{}, error) {
 
 	//increase the counter
 	p.index++
-	l:= reflect.MakeSlice(p.value.Type(),p.length,p.length)
-	reflect.Copy(l,p.value)
-	p.idle<-true
+	l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+	reflect.Copy(l, p.value)
+	p.idle <- true
 	return l.Interface(), nil
 }
 func (p Permutator) Left() int {
 	<-p.idle
-	j:=p.amount-p.index+1
-	p.idle<-true
+	j :=p.left()
+	p.idle <- true
 	return j
 }
+//because we use left inside some methods,so we need a non-block version
+func (p Permutator) left() int {
+	return p.amount - p.index + 1
+}
+
 //reverse the slice v[i:j]
 func reverse(v reflect.Value, i, j int) {
 	length := j - i + 1
@@ -173,10 +240,10 @@ func reverse(v reflect.Value, i, j int) {
 	}
 }
 
-func factorial(i int)int{
-	result:=1
-	for i>0{
-		result*=i
+func factorial(i int) int {
+	result := 1
+	for i > 0 {
+		result *= i
 		i--
 	}
 	return result
@@ -192,6 +259,5 @@ func lessFloat(i, j interface{}) bool {
 	return reflect.ValueOf(i).Float() < reflect.ValueOf(j).Float()
 }
 func lessString(i, j interface{}) bool {
-	fmt.Println(reflect.ValueOf(i).Interface().(string), reflect.ValueOf(j).Interface().(string), reflect.ValueOf(i).Interface().(string) < reflect.ValueOf(j).Interface().(string))
 	return reflect.ValueOf(i).Interface().(string) < reflect.ValueOf(j).Interface().(string)
 }
