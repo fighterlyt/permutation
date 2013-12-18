@@ -4,7 +4,11 @@ import (
 	"fmt"
 )
 func main(){
-	a:=[]int{1,2,3,4}
+	work()
+
+}
+func work(){
+		a:=[]int{1,2,3,4}
 
 	p,err:=permutation.NewPerm(a,nil)
 	if err!=nil{
@@ -12,7 +16,7 @@ func main(){
 		return
 	}
 	for result,err:=p.Next();err==nil;result,err=p.Next(){
-		fmt.Println(p.Index()-1,result.([]int))
+		fmt.Println(p.Index(),result.([]int))
 	}
 	p.Reset()
 
@@ -21,5 +25,12 @@ func main(){
 	for _,i:=range j{
 		fmt.Println(i)
 	}
-	fmt.Println(p.Index()-1)
+	fmt.Println(p.Index())
+
+	p.Reset()
+	result=p.NextN(1)
+	j=result.([][]int)
+	for _,i:=range j{
+		fmt.Println(i)
+	}
 }
