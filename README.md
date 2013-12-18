@@ -13,15 +13,24 @@ A permutation library for Golang.
 ```Go
 	func (p *Permutator) Next()(interface{}, error)
 ```	
+  Invoke **Permutator.NextN()** to return the next n permuation in lexical order.
+```Go
+  func (p *Permutator) NextN() interface{}
+```
   The returned interface{} can be modified,it does nothing to do with the Permutator
 
 Invoke **Permutator.Left()** to return the number of ungenerated permutation
 ```Go
 	func (p Permutator) Left() int
 ```
-Invoke **Permutator.Index()** to return the index of next permutation, which start from 1 to n! (n is the length of slice)
+Invoke **Permutator.Index()** to return the index of last permutation, which start from 1 to n! (n is the length of slice)
+```Go
 	func (p Permutator) Index() int
-
+```
+  Invoke **Permutator.Reset()** to reset the permutator
+```Go
+  func (p *Permutator) Reset()
+```
 An example:
 ```Go
 	func main() {
