@@ -47,26 +47,26 @@ func (p *Permutator) NextN(n int) interface{} {
 	//if n<=0 or we generate all pemutations,just return a empty slice
 	if n <= 0 || p.left() == 0 {
 		p.idle <- true
-		return make([]reflect.Value, 0, 0)
+		return reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 0, 0).Interface()
 	}
+
+	var i,j int
+	cap := p.left()
+	if cap > n {
+		cap = n
+	}
+
+	result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), cap, cap)
 
 	if p.length == 1 {
 		p.index++
 		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
 		reflect.Copy(l, p.value)
 		p.idle <- true
-		result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 1, 1)
 		result.Index(0).Set(l)
 		return result.Interface()
 	}
-
-	i := 0
-	j := 0
-	cap := p.left()
-	if cap > n {
-		cap = n
-	}
-	result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), cap, cap)
+	
 	if p.index == 1 {
 		p.index++
 		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
@@ -76,9 +76,7 @@ func (p *Permutator) NextN(n int) interface{} {
 
 	for k := 1; k < cap; k++ {
 		for i = p.length - 2; i >= 0; i-- {
-			current := p.value.Index(i).Interface()
-			next := p.value.Index(i + 1).Interface()
-			if p.less(current, next) {
+			if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 				break
 			}
 		}
@@ -104,10 +102,11 @@ func (p *Permutator) NextN(n int) interface{} {
 	return result.Interface()
 }
 
-//Invoke Permutator.Index() to return the index of next permutation, which start from 1 to n! (n is the length of slice)
+//Invoke Permutator.Index() to return the index of last permutation, which start from 1 to n! (n is the length of slice)
 func (p Permutator) Index() int {
 	<-p.idle
-	j := p.index
+
+	j := p.index-1
 	p.idle <- true
 	return j
 }
@@ -168,14 +167,14 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 //generate the next permuation in lexcial order,if all permutations generated,return an error
 func (p *Permutator) Next() (interface{}, error) {
 	<-p.idle
+	//check to see if all permutations generated
 	if p.left() <= 0 {
 		p.idle <- true
 		return nil, errors.New("all Permutations generated")
 	}
 
-	i := 0
-	j := 0
-
+	var i,j int
+	//the first permuation is just p.value
 	if p.index == 1 {
 		p.index++
 		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
@@ -184,10 +183,9 @@ func (p *Permutator) Next() (interface{}, error) {
 		return l.Interface(), nil
 	}
 
+	//when we arrive here, there must be some permutations to generate
 	for i = p.length - 2; i >= 0; i-- {
-		current := p.value.Index(i).Interface()
-		next := p.value.Index(i + 1).Interface()
-		if p.less(current, next) {
+		if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 			break
 		}
 	}
@@ -210,6 +208,7 @@ func (p *Permutator) Next() (interface{}, error) {
 	p.idle <- true
 	return l.Interface(), nil
 }
+//return the left permutation that can be generated
 func (p Permutator) Left() int {
 	<-p.idle
 	j :=p.left()
@@ -239,7 +238,7 @@ func reverse(v reflect.Value, i, j int) {
 		j--
 	}
 }
-
+//caculate n!,because this function can only be invoked by NewPerm,so we do not need the check if i>=0
 func factorial(i int) int {
 	result := 1
 	for i > 0 {
