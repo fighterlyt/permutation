@@ -75,12 +75,12 @@ func (p *Permutator) NextN(n int) interface{} {
 	}
 
 	for k := 1; k < cap; k++ {
-		for i = p.length - 2; i >= 0; i-- {
+		for i = p.length - 2; i > 0; i-- {
 			if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 				break
 			}
 		}
-		for j = p.length - 1; j >= 0; j-- {
+		for j = p.length - 1; j > 0; j-- {
 			if p.less(p.value.Index(i).Interface(), p.value.Index(j).Interface()) {
 				break
 			}
@@ -184,12 +184,13 @@ func (p *Permutator) Next() (interface{}, error) {
 	}
 
 	//when we arrive here, there must be some permutations to generate
-	for i = p.length - 2; i >= 0; i-- {
+	
+	for i = p.length - 2; i > 0; i-- {
 		if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 			break
 		}
 	}
-	for j = p.length - 1; j >= 0; j-- {
+	for j = p.length - 1; j > 0; j-- {
 		if p.less(p.value.Index(i).Interface(), p.value.Index(j).Interface()) {
 			break
 		}
