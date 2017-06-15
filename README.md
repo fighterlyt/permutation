@@ -34,7 +34,7 @@ Invoke **Permutator.Index()** to return the index of last permutation, which sta
 An example:
 ```Go
 	func main() {
-		i := []int{4,3,2,1}
+		i := []int{1,2,3}
 		p,err:=NewPerm(i,nil) //generate a Permutator
 		if err != nil {
 			fmt.Println(err)
