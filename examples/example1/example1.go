@@ -7,12 +7,8 @@ import (
 )
 
 func main() {
-	work()
-
-}
-func work() {
-	fmt.Println("a = {1, 2, 4, 4}")
-	a := []int{1, 2, 4, 4}
+	fmt.Println("a = {1, 2, 3, 4}")
+	a := []int{1, 2, 3, 4}
 
 	p, err := permutation.NewPerm(a, nil)
 	if err != nil {
