@@ -5,7 +5,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/fighterlyt/permutation"
+	"github.com/wayeast/permutation"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/fighterlyt/permutation"
+	"github.com/wayeast/permutation"
 )
 
 func main() {
