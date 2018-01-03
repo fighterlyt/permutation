@@ -33,6 +33,7 @@ type Permutator struct {
 	index  int
 	amount int
 }
+
 //Reset the Permutator, next time invoke p.Next() will return the first permutation in lexicalorder
 func (p *Permutator) Reset() {
 	<-p.idle
@@ -40,6 +41,7 @@ func (p *Permutator) Reset() {
 	p.index = 1
 	p.idle <- true
 }
+
 //return the next n permuations, if n>p.Left(),return all the left permuations
 //if all permutaions generated or n is illegal(n<=0),return a empty slice
 func (p *Permutator) NextN(n int) interface{} {
@@ -50,7 +52,7 @@ func (p *Permutator) NextN(n int) interface{} {
 		return reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 0, 0).Interface()
 	}
 
-	var i,j int
+	var i, j int
 	cap := p.left()
 	if cap > n {
 		cap = n
@@ -66,7 +68,7 @@ func (p *Permutator) NextN(n int) interface{} {
 		result.Index(0).Set(l)
 		return result.Interface()
 	}
-	
+
 	if p.index == 1 {
 		p.index++
 		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
@@ -98,7 +100,7 @@ func (p *Permutator) NextN(n int) interface{} {
 		reflect.Copy(l, p.value)
 		result.Index(k).Set(l)
 	}
-	p.idle<-true
+	p.idle <- true
 	return result.Interface()
 }
 
@@ -106,7 +108,7 @@ func (p *Permutator) NextN(n int) interface{} {
 func (p Permutator) Index() int {
 	<-p.idle
 
-	j := p.index-1
+	j := p.index - 1
 	p.idle <- true
 	return j
 }
@@ -173,7 +175,7 @@ func (p *Permutator) Next() (interface{}, error) {
 		return nil, errors.New("all Permutations generated")
 	}
 
-	var i,j int
+	var i, j int
 	//the first permuation is just p.value
 	if p.index == 1 {
 		p.index++
@@ -184,7 +186,7 @@ func (p *Permutator) Next() (interface{}, error) {
 	}
 
 	//when we arrive here, there must be some permutations to generate
-	
+
 	for i = p.length - 2; i > 0; i-- {
 		if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 			break
@@ -209,13 +211,15 @@ func (p *Permutator) Next() (interface{}, error) {
 	p.idle <- true
 	return l.Interface(), nil
 }
+
 //return the left permutation that can be generated
 func (p Permutator) Left() int {
 	<-p.idle
-	j :=p.left()
+	j := p.left()
 	p.idle <- true
 	return j
 }
+
 //because we use left inside some methods,so we need a non-block version
 func (p Permutator) left() int {
 	return p.amount - p.index + 1
@@ -239,6 +243,7 @@ func reverse(v reflect.Value, i, j int) {
 		j--
 	}
 }
+
 //caculate n!,because this function can only be invoked by NewPerm,so we do not need the check if i>=0
 func factorial(i int) int {
 	result := 1
