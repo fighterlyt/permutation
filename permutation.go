@@ -6,6 +6,7 @@ import (
 	"sort"
 )
 
+// Less defines the comparison function that can be used to sort a list
 type Less func(i, j interface{}) bool
 
 type sortable struct {
@@ -25,6 +26,8 @@ func (s sortable) Swap(i, j int) {
 	s.value.Index(j).Set(temp)
 }
 
+// Permutator is a class that one can itterate through
+// in order to get the sucessive permutations of the set
 type Permutator struct {
 	idle   chan bool
 	value  reflect.Value
@@ -42,8 +45,8 @@ func (p *Permutator) Reset() {
 	p.idle <- true
 }
 
-//return the next n permuations, if n>p.Left(),return all the left permuations
-//if all permutaions generated or n is illegal(n<=0),return a empty slice
+// NextN returns the next n permuations, if n>p.Left(),return all the left permuations
+// if all permutaions generated or n is illegal(n<=0),return a empty slice
 func (p *Permutator) NextN(n int) interface{} {
 	<-p.idle
 	//if n<=0 or we generate all pemutations,just return a empty slice
@@ -104,7 +107,7 @@ func (p *Permutator) NextN(n int) interface{} {
 	return result.Interface()
 }
 
-//Invoke Permutator.Index() to return the index of last permutation, which start from 1 to n! (n is the length of slice)
+// Index returns the index of last permutation, which start from 1 to n! (n is the length of slice)
 func (p Permutator) Index() int {
 	<-p.idle
 
@@ -113,11 +116,15 @@ func (p Permutator) Index() int {
 	return j
 }
 
-//Generate a New Permuatator, the argument k must be a non-nil slice,and the less argument must be a Less function that implements compare functionality of k's element type
-//if k's element is ordered,less argument can be nil
-//for ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
-//After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can  be used concurrently
+// ErrUnordered occurs when you have a slice in an unordered state
+var ErrUnordered = errors.New("the element type of slice is not ordered, you must provide a function")
 
+// NewPerm generate a New Permuatator,
+// the argument k must be a non-nil slice,
+// and the less argument must be a Less function that implements compare functionality of k's element type
+// if k's element is ordered,less argument can be nil
+// for ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
+// After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can  be used concurrently
 func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	v := reflect.ValueOf(k)
 	//check to see if i is a slice
@@ -147,7 +154,7 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 		case reflect.String:
 			less = lessString
 		default:
-			return nil, errors.New("the element type of slice is not ordered,you must provide a function\n")
+			return nil, ErrUnordered
 		}
 	}
 	//check to see if v is in increasing order,if not sort it
@@ -166,7 +173,7 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	return s, nil
 }
 
-//generate the next permuation in lexcial order,if all permutations generated,return an error
+//Next the next permuation in lexcial order,if all permutations generated,return an error
 func (p *Permutator) Next() (interface{}, error) {
 	<-p.idle
 	//check to see if all permutations generated
@@ -212,7 +219,7 @@ func (p *Permutator) Next() (interface{}, error) {
 	return l.Interface(), nil
 }
 
-//return the left permutation that can be generated
+//Left returns the left permutation that can be generated
 func (p Permutator) Left() int {
 	<-p.idle
 	j := p.left()
