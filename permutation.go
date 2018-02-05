@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"sort"
+	"sync"
 )
 
 type sortable struct {
@@ -26,7 +27,7 @@ func (s sortable) Swap(i, j int) {
 // Permutator is a class that one can itterate through
 // in order to get the sucessive permutations of the set
 type Permutator struct {
-	idle   chan bool
+	sync.Mutex
 	value  reflect.Value
 	less   Less
 	length int
@@ -36,17 +37,18 @@ type Permutator struct {
 
 //Reset the Permutator, next time invoke p.Next() will return the first permutation in lexicalorder
 func (p *Permutator) Reset() {
-	<-p.idle
+	p.Lock()
+	defer p.Unlock()
+
 	sort.Sort(sortable{p.value, p.less})
 	p.index = 1
-	p.idle <- true
 }
 
 // NextN returns the next n permuations, if n>p.Left(),return all the left permuations
 // if all permutaions generated or n is illegal(n<=0),return a empty slice
 func (p *Permutator) NextN(n int) interface{} {
-	<-p.idle
-	defer func() { p.idle <- true }()
+	p.Lock()
+	defer p.Unlock()
 	if n <= 0 || p.left() == 0 {
 		return reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 0, 0).Interface()
 	}
@@ -60,13 +62,13 @@ func (p *Permutator) NextN(n int) interface{} {
 
 	length := 0
 	for index := 0; index < cap; index++ {
-		p.idle <- true
+		p.Unlock()
 		if _, err := p.Next(); err == nil {
 			length++
 			list := p.copySliceValue()
 			result.Index(index).Set(list)
 		}
-		<-p.idle
+		p.Lock()
 	}
 
 	list := reflect.MakeSlice(result.Type(), length, length)
@@ -76,11 +78,11 @@ func (p *Permutator) NextN(n int) interface{} {
 }
 
 // Index returns the index of last permutation, which start from 1 to n! (n is the length of slice)
-func (p Permutator) Index() int {
-	<-p.idle
+func (p *Permutator) Index() int {
+	p.Lock()
+	defer p.Unlock()
 
 	j := p.index - 1
-	p.idle <- true
 	return j
 }
 
@@ -128,18 +130,16 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 	sortValues(value, less)
 
 	s := &Permutator{value: value, less: less, length: length, index: 1, amount: factorial(length)}
-	s.idle = make(chan bool, 1)
-	s.idle <- true
 
 	return s, nil
 }
 
 //Next the next permuation in lexcial order,if all permutations generated,return an error
 func (p *Permutator) Next() (interface{}, error) {
-	<-p.idle
+	p.Lock()
+	defer p.Unlock()
 	//check to see if all permutations generated
 	if p.left() <= 0 {
-		p.idle <- true
 		return nil, errors.New("all Permutations generated")
 	}
 
@@ -149,7 +149,6 @@ func (p *Permutator) Next() (interface{}, error) {
 		p.index++
 		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
 		reflect.Copy(l, p.value)
-		p.idle <- true
 		return l.Interface(), nil
 	}
 
@@ -176,15 +175,14 @@ func (p *Permutator) Next() (interface{}, error) {
 	p.index++
 	l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
 	reflect.Copy(l, p.value)
-	p.idle <- true
 	return l.Interface(), nil
 }
 
 //Left returns the left permutation that can be generated
-func (p Permutator) Left() int {
-	<-p.idle
+func (p *Permutator) Left() int {
+	p.Lock()
+	defer p.Unlock()
 	j := p.left()
-	p.idle <- true
 	return j
 }
 func (p *Permutator) copySliceValue() reflect.Value {
@@ -194,7 +192,7 @@ func (p *Permutator) copySliceValue() reflect.Value {
 }
 
 //because we use left inside some methods,so we need a non-block version
-func (p Permutator) left() int {
+func (p *Permutator) left() int {
 	return p.amount - p.index + 1
 }
 func (p *Permutator) swap(left, right int) {

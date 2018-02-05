@@ -19,7 +19,7 @@ func getLessFunctionByValueType(value reflect.Value) (Less, error) {
 	case reflect.String:
 		return lessString, nil
 	default:
-		return nil, errors.New("the element type of slice is not ordered, you must provide a function\n")
+		return nil, errors.New("the element type of slice is not ordered, you must provide a function")
 	}
 }
 

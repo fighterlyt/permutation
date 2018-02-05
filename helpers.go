@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+// Useable defines an interface that must exist if a type is usable
+// as one that is testable
 type Useable interface {
 	Equal(Useable) bool
 }
@@ -75,7 +77,7 @@ func equalSliceGen(a, b interface{}, piv int) bool {
 		}
 
 	default:
-		log.Fatalf("Unknown type %T, %t", a)
+		log.Fatalf("Unknown type %T, %t\n", a, a)
 
 	}
 	return true
