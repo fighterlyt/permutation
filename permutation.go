@@ -7,6 +7,12 @@ import (
 	"sync"
 )
 
+var (
+	NotASliceError         = errors.New("argument must be a slice")
+	InvalidCollectionError = errors.New("argument must not be nil")
+	EmptyCollectionError   = errors.New("argument must not be empty")
+)
+
 type sortable struct {
 	value reflect.Value
 	less  Less
@@ -100,15 +106,15 @@ func NewPerm(k interface{}, less Less) (*Permutator, error) {
 
 	//check to see if i is a slice
 	if value.Kind() != reflect.Slice {
-		return nil, errors.New("argument must be a slice")
+		return nil, NotASliceError
 	}
 
 	if value.IsValid() != true {
-		return nil, errors.New("argument must not be nil")
+		return nil, InvalidCollectionError
 	}
 
 	if value.Len() == 0 {
-		return nil, errors.New("argument must not be empty")
+		return nil, EmptyCollectionError
 	}
 
 	l := reflect.MakeSlice(value.Type(), value.Len(), value.Len())

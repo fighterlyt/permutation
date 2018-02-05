@@ -19,7 +19,7 @@ func TestFactorial(t *testing.T) {
 		}
 	}
 }
-func TestPerm1(t *testing.T) {
+func TestPermBasicInt(t *testing.T) {
 	a := []int{1, 2, 3, 4}
 	e := [][]int{
 		{1, 2, 3, 4},
@@ -47,10 +47,39 @@ func TestPerm1(t *testing.T) {
 		{4, 3, 1, 2},
 		{4, 3, 2, 1},
 	}
-	runTestGeneric(a, e)
-
+	runTestGeneric(a, e, nil)
 }
-func TestPerm2(t *testing.T) {
+func TestPermCustomLess(t *testing.T) {
+	a := []int{1, 2, 3}
+	e := [][]int{
+		{1, 2, 3},
+		{1, 3, 2},
+		{2, 1, 3},
+		{2, 3, 1},
+		{3, 1, 2},
+		{3, 2, 1},
+	}
+	l := func(i, j interface{}) bool {
+		return i.(int) < j.(int)
+	}
+	runTestGeneric(a, e, l)
+	log.Println("Forward less worked")
+	a = []int{3, 2, 1}
+	e = [][]int{
+		{3, 2, 1},
+		{3, 1, 2},
+		{2, 3, 1},
+		{2, 1, 3},
+		{1, 3, 2},
+		{1, 2, 3},
+	}
+	l = func(i, j interface{}) bool {
+		return j.(int) < i.(int)
+	}
+	runTestGeneric(a, e, l)
+	log.Println("Backwards less worked")
+}
+func TestPermDuplicates(t *testing.T) {
 	a := []int{1, 2, 4, 4}
 	e := [][]int{
 		{1, 2, 4, 4},
@@ -78,17 +107,17 @@ func TestPerm2(t *testing.T) {
 		{4, 4, 1, 2},
 		{4, 4, 2, 1},
 	}
-	runTestGeneric(a, e)
+	runTestGeneric(a, e, nil)
 }
-func TestPerm3(t *testing.T) {
+func TestPermString0(t *testing.T) {
 	a := []string{"one", "Two"}
 	e := [][]string{
 		{"Two", "one"},
 		{"one", "Two"},
 	}
-	runTestGeneric(a, e)
+	runTestGeneric(a, e, nil)
 }
-func TestPerm4(t *testing.T) {
+func TestPermString1(t *testing.T) {
 	a := []string{"one", "Two", "three"}
 	e := [][]string{
 		{"Two", "one", "three"},
@@ -98,7 +127,7 @@ func TestPerm4(t *testing.T) {
 		{"three", "Two", "one"},
 		{"three", "one", "Two"},
 	}
-	runTestGeneric(a, e)
+	runTestGeneric(a, e, nil)
 }
 
 type tmpType int
@@ -107,7 +136,7 @@ func (tt tmpType) Equal(nt Useable) bool {
 	nti := nt.(tmpType)
 	return tt == nti
 }
-func TestPerm5(t *testing.T) {
+func TestPermCustomType0(t *testing.T) {
 	var bob tmpType
 	var steve Useable
 	bob = tmpType(1)
@@ -120,10 +149,10 @@ func TestPerm5(t *testing.T) {
 		{1, 2},
 		{2, 1},
 	}
-	runTestGeneric(a, e)
+	runTestGeneric(a, e, nil)
 }
-func runTestGeneric(a interface{}, e interface{}) {
-	p, err := NewPerm(a, nil)
+func runTestGeneric(a interface{}, e interface{}, l Less) {
+	p, err := NewPerm(a, l)
 	if err != nil {
 		log.Fatal(err)
 	}
