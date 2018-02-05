@@ -14,7 +14,7 @@ func TestFactorial(t *testing.T) {
 		{4, 24},
 	}
 	for _, v := range reference {
-		if calcFactorial(v[0]) != v[1] {
+		if factorial(v[0]) != v[1] {
 			log.Fatal("Factorial problem", v[0], v[1])
 		}
 	}
@@ -141,7 +141,7 @@ func runTestGeneric(a interface{}, e interface{}) {
 
 	_, leng, sz := equalSliceSliceGen(e, result)
 
-	if calcFactorial(sz) != p.Index() {
+	if factorial(sz) != p.Index() {
 		log.Fatal("Length is wrong", leng, p.Index())
 	}
 

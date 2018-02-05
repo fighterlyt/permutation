@@ -9,14 +9,16 @@ type Useable interface {
 	Equal(Useable) bool
 }
 
-func calcFactorial(in int) int {
-	// n! = n * (n-1)!
-	if in > 1 {
-		return calcFactorial(in-1) * in
-	} else if in == 1 {
-		return 1
+func factorial(i int) int {
+	if i == 0 {
+		return 0
 	}
-	return 0
+	result := 1
+	for i > 0 {
+		result *= i
+		i--
+	}
+	return result
 }
 func checkSliceInt(e, j [][]int) {
 	for i, v := range j {

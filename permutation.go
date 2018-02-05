@@ -6,9 +6,6 @@ import (
 	"sort"
 )
 
-// Less defines the comparison function that can be used to sort a list
-type Less func(i, j interface{}) bool
-
 type sortable struct {
 	value reflect.Value
 	less  Less
@@ -49,13 +46,11 @@ func (p *Permutator) Reset() {
 // if all permutaions generated or n is illegal(n<=0),return a empty slice
 func (p *Permutator) NextN(n int) interface{} {
 	<-p.idle
-	//if n<=0 or we generate all pemutations,just return a empty slice
+	defer func() { p.idle <- true }()
 	if n <= 0 || p.left() == 0 {
-		p.idle <- true
 		return reflect.MakeSlice(reflect.SliceOf(p.value.Type()), 0, 0).Interface()
 	}
 
-	var i, j int
 	cap := p.left()
 	if cap > n {
 		cap = n
@@ -63,48 +58,21 @@ func (p *Permutator) NextN(n int) interface{} {
 
 	result := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), cap, cap)
 
-	if p.length == 1 {
-		p.index++
-		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
-		reflect.Copy(l, p.value)
+	length := 0
+	for index := 0; index < cap; index++ {
 		p.idle <- true
-		result.Index(0).Set(l)
-		return result.Interface()
-	}
-
-	if p.index == 1 {
-		p.index++
-		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
-		reflect.Copy(l, p.value)
-		result.Index(0).Set(l)
-	}
-
-	for k := 1; k < cap; k++ {
-		for i = p.length - 2; i > 0; i-- {
-			if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
-				break
-			}
+		if _, err := p.Next(); err == nil {
+			length++
+			list := p.copySliceValue()
+			result.Index(index).Set(list)
 		}
-		for j = p.length - 1; j > 0; j-- {
-			if p.less(p.value.Index(i).Interface(), p.value.Index(j).Interface()) {
-				break
-			}
-		}
-		//swap
-		temp := reflect.ValueOf(p.value.Index(i).Interface())
-		p.value.Index(i).Set(p.value.Index(j))
-		p.value.Index(j).Set(temp)
-		//reverse
-		reverse(p.value, i+1, p.length-1)
-
-		//increase the counter
-		p.index++
-		l := reflect.MakeSlice(p.value.Type(), p.length, p.length)
-		reflect.Copy(l, p.value)
-		result.Index(k).Set(l)
+		<-p.idle
 	}
-	p.idle <- true
-	return result.Interface()
+
+	list := reflect.MakeSlice(result.Type(), length, length)
+	reflect.Copy(list, result)
+
+	return list.Interface()
 }
 
 // Index returns the index of last permutation, which start from 1 to n! (n is the length of slice)
@@ -126,50 +94,43 @@ var ErrUnordered = errors.New("the element type of slice is not ordered, you mus
 // for ordered in Golang, visit http://golang.org/ref/spec#Comparison_operators
 // After generating a Permutator, the argument k can be modified and deleted,Permutator store a copy of k internel.Rght now, a Permutator can  be used concurrently
 func NewPerm(k interface{}, less Less) (*Permutator, error) {
-	v := reflect.ValueOf(k)
+	value := reflect.ValueOf(k)
+
 	//check to see if i is a slice
-	if v.Kind() != reflect.Slice {
+	if value.Kind() != reflect.Slice {
 		return nil, errors.New("argument must be a slice")
 	}
-	if v.IsValid() != true {
+
+	if value.IsValid() != true {
 		return nil, errors.New("argument must not be nil")
 	}
-	if v.Len() == 0 {
+
+	if value.Len() == 0 {
 		return nil, errors.New("argument must not be empty")
 	}
 
-	l := reflect.MakeSlice(v.Type(), v.Len(), v.Len())
-	reflect.Copy(l, v)
-	v = l
+	l := reflect.MakeSlice(value.Type(), value.Len(), value.Len())
 
-	length := v.Len()
+	reflect.Copy(l, value)
+
+	value = l
+
+	length := value.Len()
+
 	if less == nil {
-		switch v.Type().Elem().Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			less = lessInt
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			less = lessUint
-		case reflect.Float32, reflect.Float64:
-			less = lessFloat
-		case reflect.String:
-			less = lessString
-		default:
-			return nil, ErrUnordered
+		lessType, err := getLessFunctionByValueType(value)
+		if err != nil {
+			return nil, err
 		}
+		less = lessType
 	}
-	//check to see if v is in increasing order,if not sort it
-	i := 0
-	for i = 0; i < length-1; i++ {
-		if !less(v.Index(i).Interface(), v.Index(i+1).Interface()) {
-			break
-		}
-	}
-	if i != length-1 {
-		sort.Sort(sortable{v, less})
-	}
-	s := &Permutator{value: v, less: less, length: length, index: 1, amount: factorial(length)}
+
+	sortValues(value, less)
+
+	s := &Permutator{value: value, less: less, length: length, index: 1, amount: factorial(length)}
 	s.idle = make(chan bool, 1)
 	s.idle <- true
+
 	return s, nil
 }
 
@@ -226,10 +187,34 @@ func (p Permutator) Left() int {
 	p.idle <- true
 	return j
 }
+func (p *Permutator) copySliceValue() reflect.Value {
+	list := reflect.MakeSlice(p.value.Type(), p.length, p.length)
+	reflect.Copy(list, p.value)
+	return list
+}
 
 //because we use left inside some methods,so we need a non-block version
 func (p Permutator) left() int {
 	return p.amount - p.index + 1
+}
+func (p *Permutator) swap(left, right int) {
+	value := reflect.ValueOf(p.value.Index(right).Interface())
+	p.value.Index(right).Set(p.value.Index(left))
+	p.value.Index(left).Set(value)
+}
+
+func sortValues(value reflect.Value, less Less) {
+	index := 0
+	lastIndex := value.Len() - 1
+	for index = 0; index < lastIndex; index++ {
+		if !less(value.Index(index).Interface(), value.Index(index+1).Interface()) {
+			break
+		}
+	}
+
+	if index != lastIndex {
+		sort.Sort(sortable{value, less})
+	}
 }
 
 //reverse the slice v[i:j]
@@ -249,27 +234,4 @@ func reverse(v reflect.Value, i, j int) {
 		i++
 		j--
 	}
-}
-
-//caculate n!,because this function can only be invoked by NewPerm,so we do not need the check if i>=0
-func factorial(i int) int {
-	result := 1
-	for i > 0 {
-		result *= i
-		i--
-	}
-	return result
-}
-
-func lessUint(i, j interface{}) bool {
-	return reflect.ValueOf(i).Uint() < reflect.ValueOf(j).Uint()
-}
-func lessInt(i, j interface{}) bool {
-	return reflect.ValueOf(i).Int() < reflect.ValueOf(j).Int()
-}
-func lessFloat(i, j interface{}) bool {
-	return reflect.ValueOf(i).Float() < reflect.ValueOf(j).Float()
-}
-func lessString(i, j interface{}) bool {
-	return reflect.ValueOf(i).Interface().(string) < reflect.ValueOf(j).Interface().(string)
 }
