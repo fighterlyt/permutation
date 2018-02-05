@@ -1,9 +1,12 @@
 package permutation
 
-import "log"
+import (
+	"log"
+	"reflect"
+)
 
-type usable interface {
-	Equal(usable) bool
+type Useable interface {
+	Equal(Useable) bool
 }
 
 func calcFactorial(in int) int {
@@ -60,9 +63,9 @@ func equalSliceGen(a, b interface{}, piv int) bool {
 			log.Fatal(piv, "String array:", refArr[piv], "!=", resArr)
 		}
 
-	case []usable:
-		refArr := a.([][]usable)
-		resArr := b.([]usable)
+	case []Useable:
+		refArr := a.([][]Useable)
+		resArr := b.([]Useable)
 		for i, w := range resArr {
 			if !refArr[piv][i].Equal(w) {
 				log.Fatal(i, "element failed at ", piv)
@@ -70,11 +73,14 @@ func equalSliceGen(a, b interface{}, piv int) bool {
 		}
 
 	default:
-		log.Fatalf("Unknown type %T\n", a)
+		log.Fatalf("Unknown type %T, %t", a)
 
 	}
 	return true
 }
+
+// leng is the length of outer array
+// sz if the size of inner element
 func equalSliceSliceGen(a, b interface{}) (good bool, leng, sz int) {
 	switch b.(type) {
 	case [][]int:
@@ -87,6 +93,7 @@ func equalSliceSliceGen(a, b interface{}) (good bool, leng, sz int) {
 				log.Fatal("array:", refArr[piv], "!=", resArr)
 			}
 		}
+		good = true
 	case [][]string:
 		refArr := a.([][]string)
 		resArr := b.([][]string)
@@ -97,24 +104,48 @@ func equalSliceSliceGen(a, b interface{}) (good bool, leng, sz int) {
 				log.Fatal(piv, "String array:", refArr[piv], "!=", resArr)
 			}
 		}
-
-	case [][]usable:
-		refArr := a.([][]usable)
-		resArr := b.([][]usable)
-		leng = len(resArr)
-		sz = len(resArr[0])
-		for piv := range resArr {
-			for i, w := range resArr[piv] {
-				if !refArr[piv][i].Equal(w) {
-					log.Fatal(i, "element failed at ", piv)
+		good = true
+	default:
+		_, ok := a.([][]Useable)
+		if ok {
+			refArr := a.([][]Useable)
+			resArr := b.([][]Useable)
+			leng = len(resArr)
+			sz = len(resArr[0])
+			for piv := range resArr {
+				for i, w := range resArr[piv] {
+					if !refArr[piv][i].Equal(w) {
+						log.Fatal(i, "element failed at ", piv)
+					}
+				}
+			}
+			good = true
+		} else {
+			val := reflect.ValueOf(b)
+			if val.Kind() == reflect.Slice {
+				leng = val.Len() // outer length
+				for i := 0; i < leng; i++ {
+					v := val.Index(i)
+					if v.Kind() == reflect.Slice {
+						sz = v.Len() // inner length
+						for j := 0; j < sz; j++ {
+							vv := v.Index(j)
+							// b implements Usable
+							if m, ok := vv.Interface().(Useable); ok {
+								n, ok := reflect.ValueOf(a).Index(i).Index(j).Interface().(Useable)
+								if !ok {
+									log.Fatal("a is not the same type as b")
+								}
+								good = m.Equal(n)
+							} else {
+								log.Fatal("Candidate cannot be converted to a Usable type")
+							}
+						}
+					}
 				}
 			}
 		}
-
-	default:
-		log.Fatalf("Unknown type %T\n", a)
-
 	}
-	good = true
+	//good = true
 	return
 }

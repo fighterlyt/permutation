@@ -88,14 +88,47 @@ func TestPerm3(t *testing.T) {
 	}
 	runTestGeneric(a, e)
 }
+func TestPerm4(t *testing.T) {
+	a := []string{"one", "Two", "three"}
+	e := [][]string{
+		{"Two", "one", "three"},
+		{"Two", "three", "one"},
+		{"one", "Two", "three"},
+		{"one", "three", "Two"},
+		{"three", "Two", "one"},
+		{"three", "one", "Two"},
+	}
+	runTestGeneric(a, e)
+}
 
+type tmpType int
+
+func (tt tmpType) Equal(nt Useable) bool {
+	nti := nt.(tmpType)
+	return tt == nti
+}
+func TestPerm5(t *testing.T) {
+	var bob tmpType
+	var steve Useable
+	bob = tmpType(1)
+	steve = Useable(bob)
+	if !steve.Equal(bob) {
+		log.Fatal("Type problem")
+	}
+	a := []tmpType{1, 2}
+	e := [][]tmpType{
+		{1, 2},
+		{2, 1},
+	}
+	runTestGeneric(a, e)
+}
 func runTestGeneric(a interface{}, e interface{}) {
 	p, err := NewPerm(a, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for result, err := p.Next(); err == nil; result, err = p.Next() {
-		if false {
+		if true {
 			log.Println(result)
 		} else {
 			equalSliceGen(e, result, p.Index()-1)
@@ -116,6 +149,6 @@ func runTestGeneric(a interface{}, e interface{}) {
 	result = p.NextN(1)
 	_, leng, _ = equalSliceSliceGen(e, result)
 	if leng != 1 {
-		log.Fatal("p.NextN not returned expected length", result)
+		log.Fatal("p.NextN not returned expected length", leng, result)
 	}
 }
