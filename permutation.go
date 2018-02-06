@@ -175,7 +175,7 @@ func (p *Permutator) Next() (interface{}, error) {
 	p.value.Index(i).Set(p.value.Index(j))
 	p.value.Index(j).Set(temp)
 	//reverse
-	reverse(p.value, i+1, p.length-1)
+	p.reverse(i+1, p.length-1)
 
 	//increase the counter
 	p.index++
@@ -221,21 +221,16 @@ func sortValues(value reflect.Value, less Less) {
 	}
 }
 
-//reverse the slice v[i:j]
-func reverse(v reflect.Value, i, j int) {
-	length := j - i + 1
-
+func (p *Permutator) reverse(left, right int) {
+	length := (right - left) + 1
 	if length < 2 {
 		return
 	}
 
 	for length >= 2 {
-		temp := reflect.ValueOf(v.Index(j).Interface())
-		v.Index(j).Set(v.Index(i))
-		v.Index(i).Set(temp)
-
 		length -= 2
-		i++
-		j--
+		p.swap(left, right)
+		left++
+		right--
 	}
 }
