@@ -16,9 +16,11 @@ type sortable struct {
 func (s sortable) Len() int {
 	return s.value.Len()
 }
+
 func (s sortable) Less(i, j int) bool {
 	return s.less(s.value.Index(i).Interface(), s.value.Index(j).Interface())
 }
+
 func (s sortable) Swap(i, j int) {
 	temp := reflect.ValueOf(s.value.Index(i).Interface())
 	s.value.Index(i).Set(s.value.Index(j))
@@ -51,6 +53,11 @@ func (p *Permutator) MoveIndex(index int) (int, error) {
 	p.index = index
 	p.idle <- true
 	return p.index, nil
+}
+
+//Length of the Permutator, returns the number of element contained within it
+func (p *Permutator) Lenth() int {
+	return p.length
 }
 
 //return the next n permuations, if n>p.Left(),return all the left permuations
