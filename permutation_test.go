@@ -139,6 +139,7 @@ func TestPermCustomType0(t *testing.T) {
 	}
 	runTestGeneric(a, e, nil)
 }
+
 func runTestGeneric(a interface{}, e interface{}, l Less) {
 	p, err := NewPerm(a, l)
 	if err != nil {
@@ -302,20 +303,67 @@ func Test_MoveIndex(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error moving index: '%s'\n", err)
 	}
-
 	if newindex != 2 {
 		t.Errorf("Expected indext 2, is: %d\n", newindex)
 	}
 
 	// Test that an error occurs if we go beyond the end of the index
-	newindex, err = p.MoveIndex(len(testintdata) + 1)
+	newindex, err = p.MoveIndex(p.Amount())
+	if err != nil {
+		t.Error("Error moving index to last permutation")
+	}
+	if newindex != p.Amount() {
+		t.Errorf("Expected index %d, was: %d\n", p.Amount(), newindex)
+	}
+
+	// Test that an error occurs if we go beyond the end of the index
+	oldidx := p.Index()
+	newindex, err = p.MoveIndex(p.Amount() + 1)
 	if err == nil {
 		t.Error("Expected an error moving index beyond end of permutations")
+	}
+	if oldidx != newindex {
+		t.Errorf("Index should not have moved from %d, to: %d\n", oldidx, newindex)
 	}
 
 	// Test that an error occurs if we specify a negative index
 	newindex, err = p.MoveIndex(-1)
 	if err == nil {
 		t.Error("Expected an error moving index negative")
+	}
+	if oldidx != newindex {
+		t.Errorf("Index should not have moved from %d, to: %d\n", oldidx, newindex)
+	}
+}
+
+func Test_Amount(t *testing.T) {
+	testintdata := []int{1, 2}
+	p, err := NewPerm(testintdata, nil)
+	if err != nil {
+		t.Errorf("Error creating permutator: '%s'\n", err)
+	}
+
+	if p.Amount() != 2 { // 2!
+		t.Errorf("Incorrect value for Amount. Expected 2 was %d'\n", p.Amount())
+	}
+
+	testintdata = []int{1, 2, 3, 4}
+	p, err = NewPerm(testintdata, nil)
+	if err != nil {
+		t.Errorf("Error creating permutator: '%s'\n", err)
+	}
+
+	if p.Amount() != 24 { // 4!
+		t.Errorf("Incorrect value for Amount. Expected 24 was %d'\n", p.Amount())
+	}
+
+	testintdata = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	p, err = NewPerm(testintdata, nil)
+	if err != nil {
+		t.Errorf("Error creating permutator: '%s'\n", err)
+	}
+
+	if p.Amount() != 3628800 { // 10!
+		t.Errorf("Incorrect value for Amount. Expected 3628800 was %d'\n", p.Amount())
 	}
 }
