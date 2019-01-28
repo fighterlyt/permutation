@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	NotASliceError         = errors.New("argument must be a slice")
-	InvalidCollectionError = errors.New("argument must not be nil")
-	EmptyCollectionError   = errors.New("argument must not be empty")
-	IndexOutOfRangeError   = errors.New("the index is out of range")
+	NotASliceError                = errors.New("argument must be a slice")
+	InvalidCollectionError        = errors.New("argument must not be nil")
+	EmptyCollectionError          = errors.New("argument must not be empty")
+	IndexOutOfRangeError          = errors.New("the index is out of range")
+	AllPermutationsGeneratedError = errors.New("all Permutations generated")
 )
 
 type sortable struct {
@@ -96,13 +97,31 @@ func (p *Permutator) Index() int {
 // MoveIndex adjusts the current position of the index to the value provided. An error will be returned if the index is invalid or beyond
 // the range of the index of the last permuation
 func (p *Permutator) MoveIndex(index int) (int, error) {
-	if (index > p.length) || (index < 0) {
+	if (index > p.amount) || (index < 0) {
 		return p.Index(), IndexOutOfRangeError
 	}
-	p.Lock()
-	p.index = index
-	p.Unlock()
+
+	// Check to see if we have generated the permutations upto the requested index position already
+	if p.Left() < index {
+		// If so, then simply set the index and return
+		p.Lock()
+		p.index = index
+		p.Unlock()
+	} else {
+		// If we havent generated permutations up to the requested index yet, then:
+		// 1. advance the indexto the end of the generated permutations
+		// 2. use NextN to bulk request the remaining permutations - forcing them to be generated
+		// TODO
+
+		_ = p.NextN(index - 1)
+	}
 	return p.index, nil
+}
+
+func (p *Permutator) Amount() int {
+	p.Lock()
+	defer p.Unlock()
+	return p.amount
 }
 
 // ErrUnordered occurs when you have a slice in an unordered state
@@ -159,7 +178,7 @@ func (p *Permutator) Next() (interface{}, error) {
 	defer p.Unlock()
 	//check to see if all permutations generated
 	if p.left() <= 0 {
-		return nil, errors.New("all Permutations generated")
+		return nil, AllPermutationsGeneratedError
 	}
 
 	var i, j int
@@ -172,7 +191,6 @@ func (p *Permutator) Next() (interface{}, error) {
 	}
 
 	//when we arrive here, there must be some permutations to generate
-
 	for i = p.length - 2; i > 0; i-- {
 		if p.less(p.value.Index(i).Interface(), p.value.Index(i+1).Interface()) {
 			break
@@ -197,13 +215,14 @@ func (p *Permutator) Next() (interface{}, error) {
 	return l.Interface(), nil
 }
 
-//Left returns the left permutation that can be generated
+//Left returns the left (remaining) permutation that can be generated
 func (p *Permutator) Left() int {
 	p.Lock()
 	defer p.Unlock()
 	j := p.left()
 	return j
 }
+
 func (p *Permutator) copySliceValue() reflect.Value {
 	list := reflect.MakeSlice(p.value.Type(), p.length, p.length)
 	reflect.Copy(list, p.value)
@@ -214,6 +233,7 @@ func (p *Permutator) copySliceValue() reflect.Value {
 func (p *Permutator) left() int {
 	return p.amount - p.index + 1
 }
+
 func (p *Permutator) swap(left, right int) {
 	value := reflect.ValueOf(p.value.Index(right).Interface())
 	p.value.Index(right).Set(p.value.Index(left))
