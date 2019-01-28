@@ -289,3 +289,33 @@ func TestCustomLess(t *testing.T) {
 		i++
 	}
 }
+
+func Test_MoveIndex(t *testing.T) {
+	testintdata := []int{1, 2, 3, 4}
+
+	p, err := NewPerm(testintdata, nil)
+	if err != nil {
+		t.Errorf("Error creating permutator: '%s'\n", err)
+	}
+
+	newindex, err := p.MoveIndex(2)
+	if err != nil {
+		t.Errorf("Error moving index: '%s'\n", err)
+	}
+
+	if newindex != 2 {
+		t.Errorf("Expected indext 2, is: %d\n", newindex)
+	}
+
+	// Test that an error occurs if we go beyond the end of the index
+	newindex, err = p.MoveIndex(len(testintdata) + 1)
+	if err == nil {
+		t.Error("Expected an error moving index beyond end of permutations")
+	}
+
+	// Test that an error occurs if we specify a negative index
+	newindex, err = p.MoveIndex(-1)
+	if err == nil {
+		t.Error("Expected an error moving index negative")
+	}
+}

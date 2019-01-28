@@ -11,6 +11,7 @@ var (
 	NotASliceError         = errors.New("argument must be a slice")
 	InvalidCollectionError = errors.New("argument must not be nil")
 	EmptyCollectionError   = errors.New("argument must not be empty")
+	IndexOutOfRangeError   = errors.New("the index is out of range")
 )
 
 type sortable struct {
@@ -90,6 +91,18 @@ func (p *Permutator) Index() int {
 
 	j := p.index - 1
 	return j
+}
+
+// MoveIndex adjusts the current position of the index to the value provided. An error will be returned if the index is invalid or beyond
+// the range of the index of the last permuation
+func (p *Permutator) MoveIndex(index int) (int, error) {
+	if (index > p.length) || (index < 0) {
+		return p.Index(), IndexOutOfRangeError
+	}
+	p.Lock()
+	p.index = index
+	p.Unlock()
+	return p.index, nil
 }
 
 // ErrUnordered occurs when you have a slice in an unordered state

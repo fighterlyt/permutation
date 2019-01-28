@@ -31,6 +31,12 @@ Invoke **Permutator.Index()** to return the index of last permutation, which sta
 ```Go
   func (p *Permutator) Reset()
 ```
+  Invoke **Permutator.MoveIndex()** to move the current index position of the permutator
+```Go
+  func (p *Permutator) MoveIndex(index int) (int, error)
+```
+If successful, the integer value of the new index position is returned. If an error occurs, an error is return and the index position will not be adjusted.
+
 An example:
 ```Go
 	func main() {
