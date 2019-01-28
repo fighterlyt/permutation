@@ -46,17 +46,17 @@ func (p *Permutator) Reset() {
 
 //MoveIndex of the Permutator, next time invoke p.Next() will return the permutation in the index position following the newly moved to index position
 func (p *Permutator) MoveIndex(index int) (int, error) {
-	<-p.idle
-	if index > p.length {
-		return p.index, errors.New("the specified index is out of range\n")
+	if (index > p.Length()) || (index < 0) {
+		return p.Index(), errors.New("the specified index is out of range\n")
 	}
+	<-p.idle
 	p.index = index
 	p.idle <- true
 	return p.index, nil
 }
 
 //Length of the Permutator, returns the number of element contained within it
-func (p *Permutator) Lenth() int {
+func (p *Permutator) Length() int {
 	return p.length
 }
 
@@ -125,7 +125,6 @@ func (p *Permutator) NextN(n int) interface{} {
 //Invoke Permutator.Index() to return the index of last permutation, which start from 1 to n! (n is the length of slice)
 func (p Permutator) Index() int {
 	<-p.idle
-
 	j := p.index - 1
 	p.idle <- true
 	return j
