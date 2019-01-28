@@ -96,28 +96,32 @@ func (p *Permutator) Index() int {
 
 // MoveIndex adjusts the current position of the index to the value provided. An error will be returned if the index is invalid or beyond
 // the range of the index of the last permuation
-func (p *Permutator) MoveIndex(index int) (int, error) {
-	if (index > p.amount) || (index < 0) {
+func (p *Permutator) MoveIndex(newindex int) (int, error) {
+	if (newindex > p.amount) || (newindex < 0) {
 		return p.Index(), IndexOutOfRangeError
 	}
 
-	// Check to see if we have generated the permutations upto the requested index position already
-	if p.Left() < index {
-		// If so, then simply set the index and return
+	// Check to see if we have generated permutations upto (or beyond) the requested index position already
+	if (p.Amount() - p.Left()) >= newindex {
+		// If so, then simply set the index position and return. This is the most efficient.
 		p.Lock()
-		p.index = index
+		p.index = newindex
 		p.Unlock()
 	} else {
 		// If we havent generated permutations up to the requested index yet, then:
-		// 1. advance the indexto the end of the generated permutations
-		// 2. use NextN to bulk request the remaining permutations - forcing them to be generated
-		// TODO
+		// 1. advance the index to the end of the generated permutations
+		p.Lock()
+		// Need to use unlocked functions here because we are managing the locks
+		p.index = (p.amount - p.left())
+		p.Unlock()
 
-		_ = p.NextN(index - 1)
+		// 2. use NextN to bulk request the remaining permutations - forcing them to be generated
+		_ = p.NextN(newindex - p.Index())
 	}
-	return p.index, nil
+	return p.Index(), nil
 }
 
+// Amount returns the total number (the amount) of permutations.
 func (p *Permutator) Amount() int {
 	p.Lock()
 	defer p.Unlock()
