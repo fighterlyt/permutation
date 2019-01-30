@@ -54,7 +54,7 @@ func TestFactorial1(t *testing.T) {
 	for _, test := range tests {
 		if result := factorial(test.In); result != test.Result {
 			t.Errorf("%s: result %d doesn't match expected result %d\n",
-				result, test.Result)
+				test.Name, result, test.Result)
 		}
 	}
 }

@@ -52,7 +52,7 @@ func TestValueIsCopy(t *testing.T) {
 	for i, elem := range orig {
 		if p.value.Index(i).Int() != int64(elem) {
 			t.Errorf("Element mismatch: orig[%d] = %d; p.value[%d] = %d\n",
-				orig[i], p.value.Index(i).Int())
+				i, orig[i], i, p.value.Index(i).Int())
 		}
 	}
 
@@ -64,7 +64,7 @@ func TestValueIsCopy(t *testing.T) {
 	for i, elem := range orig {
 		if p.value.Index(i).Int() != int64(elem/2) {
 			t.Errorf("Element mismatch: orig[%d] = %d; p.value[%d] = %d\n",
-				orig[i], p.value.Index(i).Int())
+				i, orig[i], i, p.value.Index(i).Int())
 		}
 	}
 }
