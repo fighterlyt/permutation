@@ -79,7 +79,7 @@ func (p *Permutator) NextN(n int) interface{} {
 		p.Lock()
 	}
 
-	list := reflect.MakeSlice(result.Type(), length, length)
+	list := reflect.MakeSlice(reflect.SliceOf(p.value.Type()), length, length)
 	reflect.Copy(list, result)
 
 	return list.Interface()
