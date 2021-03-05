@@ -5,7 +5,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/wayeast/permutation"
+	"github.com/cbehopkins/permutation"
 )
 
 func main() {

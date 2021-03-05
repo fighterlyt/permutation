@@ -1,6 +1,6 @@
 package main
 import (
-	"../../permutation"
+	"github.com/cbehopkins/permutation"
 	"fmt"
 )
 func main(){

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/wayeast/permutation"
+	"github.com/cbehopkins/permutation"
 )
 
 func main() {
